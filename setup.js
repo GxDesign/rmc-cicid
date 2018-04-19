@@ -55,7 +55,7 @@ const readDevComponentsFile = () => {
     return require('./.devcomponents.json');
 };
 
-const installDependencies = (obj) => {
+const installComponentPackages = (obj) => {
     const deps = Object.keys(obj);
 
     if (deps.length > 0) {
@@ -92,7 +92,7 @@ const setDependencyPaths = (obj) => {
     return dependencyPaths;
 };
 
-const clearSimlinks = () => {
+const clearSymlinks = () => {
     const files = fs.readdirSync(componentDir);
 
     if (files.length > 0) {
@@ -116,6 +116,7 @@ const symlinkPaths = (dependencyPaths) => {
     const dependencyKeys = Object.keys(dependencyPaths);
     if (dependencyKeys.length > 0) {
         const symlinkLog = [];
+        const paths = [];
 
         dependencyKeys.forEach(packageName => {
             let revisedPackagedName = packageName;
@@ -130,36 +131,71 @@ const symlinkPaths = (dependencyPaths) => {
             fs.symlinkSync(dependencyPaths[packageName], symlinkDir, 'dir');
 
             symlinkLog.push(symlinkDir + ' -> ' + dependencyPaths[packageName]);
+            paths.push(symlinkDir);
         });
 
         console.log('Symlinked the following directories:');
         console.log(symlinkLog.join('\n'));
+        return paths;
     } else {
         console.log('Nothing to symlink.');
+        return [];
     }
 };
-
-
 
 createComponentDirectory();
 
 let devComponents;
 if (developmentFileExists()) {
     devComponents = readDevComponentsFile();
-    const devComponentsCount = Object.keys(devComponents).length;
-    console.log(devComponentsCount + ' component(s) were found specified in .devcomponents.json, they will be symlinked.');
+    if (devComponents.linkLocal) {
+        const devComponentsCount = Object.keys(devComponents.linkLocal).length;
+        console.log(devComponentsCount + ' local component(s) were found specified in .devcomponents.json, they will be symlinked.');
+    }
 }
 
 getRealMassiveComponentPackages()
-    .then(installDependencies)
+    .then(installComponentPackages)
     .then(setDependencyPaths)
     .then(deps => {
-        return addDevComponents(deps, devComponents);
+        return addDevComponents(deps, devComponents.linkLocal);
     })
     .then(deps => {
-        clearSimlinks();
+        clearSymlinks();
         return symlinkPaths(deps);
     })
+    // .then(symlinkDirectories => {
+    //     if (symlinkDirectories.length) {
+    //         console.log('Installing dependencies for symlink directories...');
+    //         return Promise.all(symlinkDirectories.map(dir => {
+    //             const packagePath = path.resolve(dir, 'package.json');
+    //             const packageFileExists = fs.existsSync(packagePath);
+
+    //             if (packageFileExists) {
+    //                 const packageJson = require(packagePath);
+
+    //                 let deps = [];
+    //                 if (packageJson.dependencies) {
+    //                     deps = deps.concat(Object.keys(packageJson.dependencies));
+    //                 }
+    //                 if (packageJson.devDependencies) {
+    //                     deps = deps.concat(Object.keys(packageJson.devDependencies));
+    //                 }
+
+    //                 console.log('Installing ' + deps.length + ' packages into ' + dir);
+
+    //                 return npm.install(deps, {
+    //                     cwd: dir
+    //                 }).then(result => {
+    //                     console.log('Installed ' + deps.length + ' packages');
+    //                     return true;
+    //                 });
+    //             } else {
+    //                 return Promise.resolve(true);
+    //             }
+    //         }));
+    //     }
+    // })
     .catch(e => {
         console.log(e);
     });
