@@ -43,13 +43,15 @@ In order to develop locally, you use a `.devcomponents.json` file in the root of
 }
 ```
 
-Using the `linkLocal` property will create a symlink in the `components` directory, with the same name as the key provided. The symlink target will be the resolved path passed as the value. For example, in the above case, the directory `components/rmc-component` would be created, pointing to the directory `../rmc-component-directory` on your filesystem.
+Using the `linkLocal` property will create a symlink in the `components` directory, with the same name as the key provided. The symlink target will be the resolved path passed as the value. For example, in the above case, the directory `components/rmc-component` would be created, pointing to the directory `../rmc-component-directory` on your filesystem. If the key of a `linkLocal` repository is the same as a remote, existing `rmc-*` NPM package, the remote package will not be downloaded, favoring the locally symlinked directory.
 
 If set to `true`, the `skipRemote` property will cause `npm run setup` command to skip searching the remote NPM registry, which is useful if you only need to set up the project to develop local components.
 
 Once directories are symlinked, you can edit the components directly from your local `realmassive-components` repo. Styleguidist live-reloads your changes, giving you quick feedback. Check the [react-styleguidist docs](https://react-styleguidist.js.org/docs/documenting.html) for more info on how to document your components for the library and make them easy to use.
 
 After you're done making changes, you will need to commit your work in the actual component repos that you have symlinked, not this one (unless you have made modifications to this project).
+
+NOTE: **DO NOT** create new module repositories directly within the `components/` directory. It is not tracked by git, and is emptied out every time `npm run setup` is run. You should create a separate directory and add it to your `.devcomponents.json` file.
 
 # RealMassive Component Guidelines
 

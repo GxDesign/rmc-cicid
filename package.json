@@ -1,7 +1,7 @@
 {
   "name": "@realmassive/realmassive-components-v2",
   "version": "0.1.0",
-  "description": "How realmassive-components will work:",
+  "description": "",
   "main": "setup.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -34,7 +34,8 @@
     "webpack": "^3.5.4"
   },
   "devDependencies": {
-    "react-styleguidist": "7.0.6"
+    "react-styleguidist": "7.0.6",
+    "rimraf": "^2.6.2"
   },
   "engine": {
     "node": "^6"

@@ -1,8 +1,9 @@
 const exec = require('child_process').exec;
+const execSync = require('child_process').execSync;
 const path = require('path');
 const fs = require('fs');
+const rimraf = require('rimraf');
 const Promise = require('bluebird');
-const npm = require('npm-programmatic');
 let developmentFile;
 
 const filterForComponentPackages = (obj) => {
@@ -14,6 +15,18 @@ const filterForComponentPackages = (obj) => {
     });
 
     return filtered;
+};
+
+const clearComponentsDir = () => {
+    return new Promise((resolve, reject) => {
+        rimraf(path.resolve(__dirname, 'components'), (e) => {
+            if (e) {
+                reject(e);
+            } else {
+                resolve();
+            }
+        });
+    });
 };
 
 const getRealMassiveComponentPackages = () => {
@@ -55,17 +68,39 @@ const readDevComponentsFile = () => {
     return require('./.devcomponents.json');
 };
 
-const installComponentPackages = (obj) => {
-    const deps = Object.keys(obj);
+const installRemotePackages = (obj) => {
+    let deps = Object.keys(obj);
+
+    if (devComponents.skipRemote === true) {
+        console.log('.devcomponents.json specified skipRemote, not installing remote packages.');
+        return [];
+    }
 
     if (deps.length > 0) {
-        return npm.install(Object.keys(obj)).then(result => {
-            console.log('Installed ' + deps.length + ' packages', result);
-            return obj;
-        });
+        const localsOverridingRemote = [];
+        if (devComponents.linkLocal) {
+            Object.keys(devComponents.linkLocal).forEach(key => {
+                if (deps.includes('@realmassive/' + key)) {
+                    localsOverridingRemote.push(key);
+                    deps.splice(deps.indexOf('@realmassive/' + key), 1);
+                }
+            });
+        }
+
+        if (localsOverridingRemote.length > 0) {
+            console.log('The following remote packages were found but specified in .devcomponents.json\'s linkLocal config, skipping:');
+            console.log('- ' + localsOverridingRemote.join('\n- '));
+        }
+
+        if (deps.length > 0) {
+            execSync('npm install ' + deps.join(' '));
+            console.log('Installed ' + deps.length + ' packages.');
+        }
+
+        return deps;
     } else {
         console.log('No published rmc-* packages to install.');
-        return obj;
+        return deps;
     }
 };
 
@@ -85,8 +120,8 @@ const addDevComponents = (obj, devComponents) => {
 const setDependencyPaths = (obj) => {
     dependencyPaths = {};
 
-    Object.keys(obj).forEach(key => {
-        dependencyPaths[key] = path.resolve(__dirname, 'node_modules/' + key)
+    obj.forEach(module => {
+        dependencyPaths[module] = path.resolve(__dirname, 'node_modules/' + module);
     });
 
     return dependencyPaths;
@@ -154,16 +189,20 @@ if (developmentFileExists()) {
     }
 }
 
+clearSymlinks();
+
 getRealMassiveComponentPackages()
-    .then(installComponentPackages)
+    .then(installRemotePackages)
     .then(setDependencyPaths)
     .then(deps => {
         return addDevComponents(deps, devComponents.linkLocal);
     })
     .then(deps => {
-        clearSymlinks();
         return symlinkPaths(deps);
     })
+    // this installs dependencies for the symlinks--but probably isn't necessary with
+    // correct configuration settings
+
     // .then(symlinkDirectories => {
     //     if (symlinkDirectories.length) {
     //         console.log('Installing dependencies for symlink directories...');
