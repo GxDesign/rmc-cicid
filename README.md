@@ -53,40 +53,40 @@ After you're done making changes, you will need to commit your work in the actua
 
 NOTE: **DO NOT** create new module repositories directly within the `components/` directory. It is not tracked by git, and is emptied out every time `npm run setup` is run. You should create a separate directory and add it to your `.devcomponents.json` file.
 
-# RealMassive Component Guidelines
+# RealMassive Component Rules and Guidelines
 
-TODO: use https://github.com/webpack-contrib/eslint-loader
+## Rules
 
-Working packages:
+These are the rules for working with RMCs. Many of these are already handled for you by `@realmassive/generator-rmc`, as explained in Development and Publishing:
 
-- styled-components
+- Handled for you by `@realmassive/generator-rmc` and Yeoman:
+	- The component's package name must begin with `@realmassive/rmc-`.
+	- The component must be a React component.
+	- The component should be developed using the `@realmassive/component-build-chain` package
+	- The component should specify the `"entry"` key in the `package.json` as `"dist/index.js"`
+	- The component should specify the `"files"` key in the `package.json` as `"dist"`
+	- All generated files should end up in the "dist" property
+- Things you have to set up:
+	- For single-component packages:
+		- The package must have a `src/index.js` file and build out a top-level `index.js` which can be imported.
+		- The package must supply a top-level README.md which can be read by react-styleguidist to use
+	- For multi-component packages ([**rmc-icons**](https://github.com/RealMassive/rmc-icons), for example):
+		- The package must have a `src/index.js` file which exports all the expected files
 
-How realmassive-components will work:
+## Development and Publishing
 
-- Centralized project uses react-styleguidist to create a list of components.
-- On load, use a command to load in the latest versions of the components. Will check the versions of these packages and show updated packages. This is a package _browser_. (Maybe on-the-fly compilation? Not sure if I can get that to work.) The developer can choose to symlink a package locally.
-- In order to use `realmassive-components`, the user must be logged in to NPM and have access to the RealMassive private package registry.
-- User can specify a local directory and a package name (similar to how package.json#dependencies works) to define a working component for development inside of a `devcomponents.json` file (which will be gitignored)
-- RM components (or RMCs)
-	- RMCs must be React components.
-	- RMCs must use ES6 syntax and expect to be imported via webpack.
-	- RMCs must export a top-level index.jsx file that exports the component.
-	- RMCs must define a top-level README.md file.
-	- RMCs must use CSS Modules.
-	- RMCs must document their CSS structure
-	- RMCs must export only one top-level component per package (although that component may rely on child components--but these child components should not be used by downstream consumers).
-	- RMCs must provide tests which match the glob `*.test.js`.
-	- RMCs may utilize functionality from the following toolchain:
-		- webpack
-		- babel-preset-react
-		- babel-preset-es2015
-		- babel-preset-stage-0
-		- babel-plugin-react-css-modules
-	- RMCs do not provide dist versions of themselves because they are to be consumed by downstream applications which we control; third parties do not need distributed versions of our files.
-	- RMCs must provide a way to override or utilize the CSS classes provided.
+Developing individual RMC packages has a specific workflow required.
 
-- Downtream consumers (applications, projects, 3rd party embeds)
+1. Setup
+	1. `npm install -g yo @realmassive/generator-rmc` - Install Yeoman and the RMC template generator
+	1. `yo @realmassive/rmc <component-name>` - Create your component project (omit the initial `rmc-`, it will be added for you)
+1. Development in `realmassive-components` project
+	1. Add path to component folder to your `.devcomponents.json` file then `npm run setup`
+	1. Develop locally in `realmassive-components`, taking advantage of hot reload and documentation
+1. Publishing
+	1. Create GitHub repository and push
+	1. Run `npm run build` and `npm publish` in the individual package
 
-NOTE that realmassive-components can simply have a component force symlinked into its `components` directory--but `setup.js` will overwrite any component that conflicts with existing NPM packages or that is specified within `.devcomponents.json`. (I should fix this so that you can flag whether or not you intend to overwrite. Don't overwrite by default, probably?)
+NOTE/POTENTIAL ISSUE: This creates a coupling between the build tooling in `component-build-chain` and the webpack config in this project's `styleguide.config.js`. If an RMC expands the scope of the build tooling in `component-build-chain`, this project's webpack config must also be updated to accomodate it.
 
-# RMC-Consuming Project Guidelines
+Currently, the webpack config in Styleguidist supports Babel with babel-preset-env for the last 2 browser versions, React, and loading image assets (.png, .jpg, and .gif).

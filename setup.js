@@ -164,6 +164,7 @@ const symlinkPaths = (dependencyPaths) => {
 
             const symlinkDir = path.resolve(componentDir, revisedPackagedName);
             fs.symlinkSync(dependencyPaths[packageName], symlinkDir, 'dir');
+            execSync('npm link ' + dependencyPaths[packageName]);
 
             symlinkLog.push(symlinkDir + ' -> ' + dependencyPaths[packageName]);
             paths.push(symlinkDir);
@@ -197,44 +198,41 @@ getRealMassiveComponentPackages()
     .then(deps => {
         return addDevComponents(deps, devComponents.linkLocal);
     })
-    .then(deps => {
-        return symlinkPaths(deps);
-    })
+    .then(symlinkPaths)
     // this installs dependencies for the symlinks--but probably isn't necessary with
     // correct configuration settings
+    //
+    // TODO: this probably won't work correctly for remote components
+    .then(symlinkDirectories => {
+        if (symlinkDirectories.length) {
+            console.log('Installing dependencies for symlink directories...');
+            return Promise.all(symlinkDirectories.map(dir => {
+                const packagePath = path.resolve(dir, 'package.json');
+                const packageFileExists = fs.existsSync(packagePath);
 
-    // .then(symlinkDirectories => {
-    //     if (symlinkDirectories.length) {
-    //         console.log('Installing dependencies for symlink directories...');
-    //         return Promise.all(symlinkDirectories.map(dir => {
-    //             const packagePath = path.resolve(dir, 'package.json');
-    //             const packageFileExists = fs.existsSync(packagePath);
+                if (packageFileExists) {
+                    const packageJson = require(packagePath);
 
-    //             if (packageFileExists) {
-    //                 const packageJson = require(packagePath);
+                    let deps = [];
+                    if (packageJson.dependencies) {
+                        deps = deps.concat(Object.keys(packageJson.dependencies));
+                    }
+                    if (packageJson.devDependencies) {
+                        deps = deps.concat(Object.keys(packageJson.devDependencies));
+                    }
 
-    //                 let deps = [];
-    //                 if (packageJson.dependencies) {
-    //                     deps = deps.concat(Object.keys(packageJson.dependencies));
-    //                 }
-    //                 if (packageJson.devDependencies) {
-    //                     deps = deps.concat(Object.keys(packageJson.devDependencies));
-    //                 }
+                    console.log('Installing ' + deps.length + ' packages into ' + dir);
 
-    //                 console.log('Installing ' + deps.length + ' packages into ' + dir);
+                    console.log(`cd ${dir} && npm install ${deps.join(' ')}`);
+                    execSync(`cd ${dir} && npm install ${deps.join(' ')}`);
 
-    //                 return npm.install(deps, {
-    //                     cwd: dir
-    //                 }).then(result => {
-    //                     console.log('Installed ' + deps.length + ' packages');
-    //                     return true;
-    //                 });
-    //             } else {
-    //                 return Promise.resolve(true);
-    //             }
-    //         }));
-    //     }
-    // })
+                    console.log('Installed ' + deps.length + ' packages');
+                } else {
+                    return Promise.resolve(true);
+                }
+            }));
+        }
+    })
     .catch(e => {
         console.log(e);
     });
