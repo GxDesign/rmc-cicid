@@ -165,6 +165,7 @@ const symlinkPaths = (dependencyPaths) => {
             const symlinkDir = path.resolve(componentDir, revisedPackagedName);
             fs.symlinkSync(dependencyPaths[packageName], symlinkDir, 'dir');
             execSync('npm link ' + dependencyPaths[packageName]);
+            console.log('Symlinked ' + revisedPackagedName + '.');
 
             symlinkLog.push(symlinkDir + ' -> ' + dependencyPaths[packageName]);
             paths.push(symlinkDir);
@@ -186,7 +187,9 @@ if (developmentFileExists()) {
     devComponents = readDevComponentsFile();
     if (devComponents.linkLocal) {
         const devComponentsCount = Object.keys(devComponents.linkLocal).length;
-        console.log(devComponentsCount + ' local component(s) were found specified in .devcomponents.json, they will be symlinked.');
+        if (devComponentsCount > 0) {
+            console.log(devComponentsCount + ' local component(s) were found specified in .devcomponents.json, they will be symlinked.');
+        }
     }
 }
 
@@ -199,40 +202,6 @@ getRealMassiveComponentPackages()
         return addDevComponents(deps, devComponents.linkLocal);
     })
     .then(symlinkPaths)
-    // this installs dependencies for the symlinks--but probably isn't necessary with
-    // correct configuration settings
-    //
-    // TODO: this probably won't work correctly for remote components
-    .then(symlinkDirectories => {
-        if (symlinkDirectories.length) {
-            console.log('Installing dependencies for symlink directories...');
-            return Promise.all(symlinkDirectories.map(dir => {
-                const packagePath = path.resolve(dir, 'package.json');
-                const packageFileExists = fs.existsSync(packagePath);
-
-                if (packageFileExists) {
-                    const packageJson = require(packagePath);
-
-                    let deps = [];
-                    if (packageJson.dependencies) {
-                        deps = deps.concat(Object.keys(packageJson.dependencies));
-                    }
-                    if (packageJson.devDependencies) {
-                        deps = deps.concat(Object.keys(packageJson.devDependencies));
-                    }
-
-                    console.log('Installing ' + deps.length + ' packages into ' + dir);
-
-                    console.log(`cd ${dir} && npm install ${deps.join(' ')}`);
-                    execSync(`cd ${dir} && npm install ${deps.join(' ')}`);
-
-                    console.log('Installed ' + deps.length + ' packages');
-                } else {
-                    return Promise.resolve(true);
-                }
-            }));
-        }
-    })
     .catch(e => {
         console.log(e);
     });
