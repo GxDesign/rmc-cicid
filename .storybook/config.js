@@ -19,6 +19,7 @@ const storyReq = require.context('../stories', true, /\.js$/);
 function loadStories() {
 	require('../stories/header.js');
 	require('../stories/icons.js');
+	require('../stories/footer.js');
 	req.keys().forEach((filename) => req(filename))
 	// storyReq.keys().forEach((filename) => req(filename))
 	// You can require as many stories as you need.
