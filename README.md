@@ -17,7 +17,6 @@ In order to make RMCs universally consumable across RM projects, they must be de
 1. Make sure you are logged into NPM (run `npm login`) and belong to the RealMassive organization
 1. Clone this repo and `cd` to it
 1. `npm install`
-1. Run `npm run setup`
 
 ## Viewing components
 
@@ -31,10 +30,12 @@ After running the steps from **Getting started**:
 In order to develop locally, you can simply add the package to this repository's dependency list in `package.json` then run `npm link <path to local directory>`. Then you can import your package by the official name. For instance, if you intend to do development on a package called `@realmassive/rmc-fancy-box`, and you had a local `fancy-box` repository as a sibling of your `realmassive-components` directory, you would run the following from the `realmassive-components` directory:
 
 	1. Add `@realmassive/rmc-fancy-box` to the `package.json` `dependencies` object
-	2. `npm link ../fancy-box`
-	3. `npm run storybook`
-	4. In another terminal inside of the `fancy-box` directory, `npm run dev`
-	5. Write a new story for your component inside of `stories`.
+	1. Generate a new component boilerplate with `yo @realmassive/rmc <component-name>` (see Development and Publishing)
+	1. `npm link ../fancy-box`
+	1. `npm run storybook`
+	1. In another terminal inside of the `fancy-box` directory, `npm run dev`
+	1. Write a new story for your component inside of `stories`.
+	1. Add a new entry to `.storybook/config.js` for your file.
 
 Once directories are symlinked, you can edit the components directly from your local `realmassive-components` repo. Storybook live-reloads your changes, giving you quick feedback. Check the [Storybook docs](https://storybook.js.org/basics/writing-stories/) for more info on how to write stories for your component.
 
