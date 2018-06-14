@@ -52,6 +52,8 @@ These are the rules for working with RMCs. Many of these are already handled for
 	- The component should specify the `"entry"` key in the `package.json` as `"dist/index.js"`
 	- The component should specify the `"files"` key in the `package.json` as `"dist"`
 	- All generated files should end up in the "dist" property
+	- If the component is to be themable by various projects, it must use `@realmassive/rmc-theme-provider` and pass a `theme` prop to it
+	- If the component specifies any shared libraries, it must specify them as peerDependencies
 
 ## Development and Publishing
 

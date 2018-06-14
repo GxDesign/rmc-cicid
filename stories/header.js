@@ -14,12 +14,6 @@ the actual header fonts in practice should be much thinner. See the header in \`
 `;
 
 storiesOf('Header [rmc-header]', module)
-    // .addDecorator((story, context) => withInfo(`
-    //     Note that due to inexplicable differences in how Google Fonts are loaded into different environments,
-    //     the actual header fonts in practice should be much thinner. See the header in \`autopilot-business\`:
-
-    //     ![](https://i.imgur.com/RwAfsw2.png)
-    // `)(story)(context))
     .addDecorator(withReadme(readme))
     .addDecorator(StoryRouter())
     .add('logged out', () => (
